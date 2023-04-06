@@ -4,8 +4,6 @@ using Chain
 using Distributions
 using LinearAlgebra
 using StatsBase
-using Unitful
-using UnitfulAtomic
 
 export NormalDecomposition
 export project, normal_modes, mode_masses, frequencies, sample
@@ -26,10 +24,10 @@ function NormalDecomposition(hessian, masses ; valid_modes = 7:3length(masses))
 
     M = Diagonal(m)
 
-    W, U = eigen(M * hessian * M)
+    Ω, U = eigen(M * hessian * M)
 
     # Sometimes very low frequencies are artificially negative
-    ωs = sqrt.(abs.(W))
+    ωs = sqrt.(abs.(Ω))
     perm = sortperm(ωs)[valid_modes]
     ωs = ωs[perm]
     U = U[:, perm]
@@ -66,12 +64,11 @@ end
 
 # TODO Extend to non-atomic units
 function StatsBase.sample(nm::NormalDecomposition, n_samples)
-    hbar = austrip(1u"hbar")
+    hbar = 1
     Δz_dist = MvNormal(Diagonal(hbar ./ 2nm.ωs))
     Δp_dist = MvNormal(Diagonal(nm.ωs / 2))
     MU = Diagonal(nm.m) * nm.U
-    MU = normal_modes(nm)
-
+    
     Δx = MU*rand(Δz_dist, n_samples) 
     Δp = rand(Δp_dist, n_samples)
     return Δx, Δp
