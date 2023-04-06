@@ -48,7 +48,7 @@ Now what are the normal modes in all that? That's where it gets confusing and th
 2. The columns of $\rm \bf MU$. They are in real space, but they are are no longer neither normed nor orthogonal.
 3. The columns of $\rm \bf MU$ normalized. Still not orthogonal to each other but at least they have norm 1. However it loses information about $\rm \bf M$ which is needed to convert between $\rm \bf x$ and $\rm \bf z$ or to perform Wigner sampling. So those are ofter return together with so-called *mode masses*, the norm of the columns of $\rm \bf MU$ before being normed[^lunacy].
 
-As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. However to avoid a slow descent into madness, the package provides a specific object type `NormalModes(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
+As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. However to avoid a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
 - `normal_modes` : The (normed) normal modes for example to plot or animate them (possible integration with Makie may become available at some point).
 - `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
 - `frequencies` : Frequencies of the modes.
