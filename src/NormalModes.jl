@@ -9,13 +9,12 @@ using Unitful
 using UnitfulAtomic
 
 export NormalDecomposition
-export project, normal_modes, mode_masses, frequencies, wave_number, reduced_masses
+export project, normal_modes, frequencies, wave_number, reduced_masses
 export sample
 
 # TODO add the number of releveant mode somewhere
 struct NormalDecomposition{T}
     ωs::Vector{T}
-    modes::Matrix{T}
     m::Vector{T}  # Diagonal of the mass weighting matrix M
     U::Matrix{T}  # Orthonormal modes
 end
@@ -39,7 +38,7 @@ function NormalDecomposition(hessian::Matrix, masses::Vector ; valid_modes = 1:3
     ωs = ωs[perm]
     U = U[:, perm]
 
-    return NormalDecomposition(ωs, M * U, m, U)
+    return NormalDecomposition(ωs, m, U)
 end
 
 function to_atomic_units(x::VecOrMat)
@@ -59,11 +58,9 @@ end
 
 function normal_modes(nm::NormalDecomposition)
     modes = Diagonal(nm.m) * nm.U
-    μs = mode_masses(nm)
+    μs = norm.(eachcol(modes))
     return modes ./ reshape(μs, 1, :)
 end
-
-mode_masses(nm::NormalDecomposition) = norm.(eachcol(nm.modes))
 
 function reduced_masses(nm::NormalDecomposition)
     @chain nm.m begin

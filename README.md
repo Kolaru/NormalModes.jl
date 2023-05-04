@@ -65,7 +65,7 @@ As far as I know the last one is what, despite my strong feelings, is known as *
 - `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
 - `frequencies` : Frequencies of the modes (in GHz).
 - `wave_number` : Wave numbers of the modes (in inverse cm).
-- `reduced_mass` : Reduced masses of the modes (in AMU).
+- `reduced_mass` : Reduced masses of the modes (in AMU), following [this question](https://physics.stackexchange.com/questions/401370/normal-modes-how-to-get-reduced-masses-from-displacement-vectors-atomic-masses) and (I believe) similar to what Gamess does.
 
 The 3 last are returned as Unitful quantity.
 
