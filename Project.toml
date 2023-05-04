@@ -7,13 +7,10 @@ version = "0.1.0"
 Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PeriodicTable = "7b2266bf-644c-5ea3-82d8-af4bbd25a884"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-
-[compat]
-julia = "1.6"
-Chain = "0.5"
-Distributions = "0.25 - 0.28"
-StatsBase = "0.33"
+Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+UnitfulAtomic = "a7773ee8-282e-5fa2-be4e-bd808c38a91a"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

@@ -3,10 +3,14 @@ module NormalModes
 using Chain
 using Distributions
 using LinearAlgebra
+using PeriodicTable
 using StatsBase
+using Unitful
+using UnitfulAtomic
 
 export NormalDecomposition
-export project, normal_modes, mode_masses, frequencies, sample
+export project, normal_modes, mode_masses, frequencies, wave_number, reduced_masses
+export sample
 
 # TODO add the number of releveant mode somewhere
 struct NormalDecomposition{T}
@@ -16,7 +20,10 @@ struct NormalDecomposition{T}
     U::Matrix{T}  # Orthonormal modes
 end
 
-function NormalDecomposition(hessian, masses ; valid_modes = 7:3length(masses))
+function NormalDecomposition(hessian::Matrix, masses::Vector ; valid_modes = 1:3length(masses))
+    hessian = to_atomic_units(hessian)
+    masses = to_atomic_masses(masses)
+
     m = @chain masses begin
         vcat([fill(m, 3) for m in _]...)
         1 ./ sqrt.(_)
@@ -35,6 +42,16 @@ function NormalDecomposition(hessian, masses ; valid_modes = 7:3length(masses))
     return NormalDecomposition(ωs, M * U, m, U)
 end
 
+function to_atomic_units(x::VecOrMat)
+    @warn "A unitless quantity was given. We assume it was atomic units."
+    return x
+end
+to_atomic_units(x::VecOrMat{<:Quantity}) = austrip.(x)
+
+to_atomic_masses(x) = to_atomic_units(x)
+to_atomic_masses(x::VecOrMat{<:Element}) = [austrip(elem.atomic_mass) for elem in x]
+to_atomic_masses(x::VecOrMat{<:Integer}) = to_atomic_masses([elements[i] for i in x])
+
 function project(nm::NormalDecomposition, v::Array{<:Any, 3})
     projector = nm.U' * Diagonal(1 ./ nm.m)
     return projector * reshape(v, length(nm.m), :)
@@ -47,7 +64,30 @@ function normal_modes(nm::NormalDecomposition)
 end
 
 mode_masses(nm::NormalDecomposition) = norm.(eachcol(nm.modes))
-frequencies(nm::NormalDecomposition) = nm.ωs
+
+function reduced_masses(nm::NormalDecomposition)
+    @chain nm.m begin
+        Diagonal(_) .^ 2
+        _ * (nm.U .^ 2)
+        sum(_ ; dims = 1)
+        vec(_)
+        1 ./ _
+        _ * aunit(u"kg")
+        uconvert.(u"u", _)
+    end
+end
+
+frequencies(nm::NormalDecomposition) = @chain nm.ωs begin
+    _ ./ 2π 
+    _ * aunit(u"s^-1")  # Add atomic unit of inverse time
+    uconvert.(u"GHz", _)  # Standard units
+end
+
+wave_number(nm::NormalDecomposition) = @chain nm begin
+    frequencies(_)
+    _ ./ 1u"c"  # Divide by the speed of light
+    uconvert.(u"cm^-1", _)  # Standard units
+end
 
 # TODO Not sure this is correct
 function position_covariance(nm::NormalDecomposition ; regularize = true)

@@ -16,7 +16,7 @@ $$
 \mathcal{V}({\rm \bf x}) = V_0 + \nabla \mathcal{V}({\rm \bf x}) + {\rm \bf x}^T {\rm \bf H} {\rm \bf x} + \mathcal{O}({\rm \bf x}^3),
 $$
 
-where ${\rm \bf H}$ is the Hermitian matrix of the potential[^potential], and $V_0$ a constant shift that we can set to zero. Also since we are assuming to be at equilibrium, the gradient $\nabla \mathcal{V}({\rm \bf x})$ is zero as well. This leads to the approximation
+where ${\rm \bf H}$ is the Hessian matrix of the potential[^potential], and $V_0$ a constant shift that we can set to zero. Also since we are assuming to be at equilibrium, the gradient $\nabla \mathcal{V}({\rm \bf x})$ is zero as well. This leads to the approximation
 
 $$
 \mathcal{V}({\rm \bf x}) = {\rm \bf x}^T {\rm \bf H} {\rm \bf x}
@@ -63,15 +63,17 @@ Now what are the normal modes in all that? That's where it gets confusing and th
 As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. However to avoid a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
 - `normal_modes` : The (normed) normal modes for example to plot or animate them (possible integration with Makie may become available at some point).
 - `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
-- `frequencies` : Frequencies of the modes.
+- `frequencies` : Frequencies of the modes (in GHz).
+- `wave_number` : Wave numbers of the modes (in inverse cm).
+- `reduced_mass` : Reduced masses of the modes (in AMU).
+
+The 3 last are returned as Unitful quantity.
 
 ## Caveats
 
-Currently the Hessian must be given in atomic units. This should only really matters for Wigner sampling where the value of $\hbar$ is used. Otherwise the units should always simply be consistent with the input.
+Currently all internal calculations are performed in atomic units. If a return is returned without units, it is either unitless (like the modes) or in atomic units, as the use of Unitful quantities is not finished yet.
 
 The code still only half convince myself, is poorly documented and tested, and is missing a bunch of nice API.
-
-This README is longer than the code itself.
 
 ## Footnotes
 
