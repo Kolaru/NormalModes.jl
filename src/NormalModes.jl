@@ -14,8 +14,8 @@ export sample
 
 # TODO add the number of releveant mode somewhere
 struct NormalDecomposition{T}
-    ωs::Vector{T}
-    m::Vector{T}  # Diagonal of the mass weighting matrix M
+    ωs::Vector{T}  # Angular frequencies
+    m::Vector{T}  # Inverse square root of the masses
     U::Matrix{T}  # Orthonormal modes
 end
 
@@ -103,11 +103,11 @@ end
 function StatsBase.sample(nm::NormalDecomposition, n_samples)
     hbar = 1
     Δz_dist = MvNormal(Diagonal(hbar ./ 2nm.ωs))
-    Δp_dist = MvNormal(Diagonal(nm.ωs / 2))
+    Δp_dist = MvNormal(Diagonal(hbar * nm.ωs / 2))
     MU = Diagonal(nm.m) * nm.U
     
     Δx = MU*rand(Δz_dist, n_samples) 
-    Δp = rand(Δp_dist, n_samples)
+    Δp = Diagonal(nm.m).^2 * MU*rand(Δp_dist, n_samples)
     return Δx, Δp
 end
 
