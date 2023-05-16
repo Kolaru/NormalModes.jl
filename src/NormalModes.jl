@@ -101,9 +101,10 @@ end
 
 # TODO Extend to non-atomic units
 function StatsBase.sample(nm::NormalDecomposition, n_samples)
-    hbar = 1
-    Δz_dist = MvNormal(Diagonal(hbar ./ 2nm.ωs))
-    Δp_dist = MvNormal(Diagonal(hbar * nm.ωs / 2))
+    hbar = 1  # Atomic units
+    m = 1  # All modes have mass 1
+    Δz_dist = MvNormal(Diagonal(1/2 * (hbar ./ (m * nm.ωs))))
+    Δp_dist = MvNormal(Diagonal(1/2 * hbar * m * nm.ωs))
     MU = Diagonal(nm.m) * nm.U
     
     Δx = MU*rand(Δz_dist, n_samples) 

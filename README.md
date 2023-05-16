@@ -1,10 +1,10 @@
-# NormalModes
+# NormalModes.jl
 
 This is a simple package that provides utility function to compute normal modes from a Hessian matrix, and then work with them.
 
 The other use of this package is to give me a space to ramble about normal modes, and I will shamelessly use this README for this purpose.
 
-## Proper introduction
+# Proper introduction
 
 Because I find the subject confusing, and the introductions describing the problem as well, I think it is worth laying down the basics here.
 
@@ -28,7 +28,7 @@ $$
 \mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + {\rm \bf x}^T {\rm \bf H} {\rm \bf x},
 $$
 
-where $m_i$ is the mass of dimension $i$[^mass]. Now this is the Hamiltionian of a set of coupled harmonic oscillator, and we will change basis to rewrite it as a system of *uncoupled* harmonic oscillators that all have mass 1[^simplify].
+where $m_i$ is the mass of dimension $i$[^mass]. Now this is the Hamiltionian of a set of coupled harmonic oscillator, and we will change basis to rewrite it as a system of *uncoupled* harmonic oscillators.
 
 We introduce the diagonal mass weighting matrix ${\rm \bf M}$ with ${\rm \bf M}_{ii} = m_i^{-\frac{1}{2}}$. We do an eigendecomposition of the weighted Hermitian $\rm \bf M H M$ as
 
@@ -44,7 +44,7 @@ $$
 {\rm \bf x} = {\rm \bf M U z}.
 $$
 
-Inserting it in the Hamiltonian we get the decoupled system of harmonic oscillators[^annex]
+Inserting it in the Hamiltonian we get the decoupled system of harmonic oscillators (see the annex for the derivation)
 
 $$
 \mathcal{H} = \sum_j \frac{-\hbar^2}{2} \frac{\partial^2}{\partial z_j^2} + \omega_j^2 z_j^2.
@@ -52,7 +52,7 @@ $$
 
 We can check wikipedia to get whatever we need from it, like for example the Wigner distribution for sampling, and it is how it was implemented in the package.
 
-## The package
+# The package
 
 Now what are the normal modes in all that? That's where it gets confusing and the reason I wrote this section to begin with. Candidates are
 
@@ -69,11 +69,76 @@ As far as I know the last one is what, despite my strong feelings, is known as *
 
 The 3 last are returned as Unitful quantity.
 
-## Caveats
+# Caveats
 
 Currently all internal calculations are performed in atomic units. If a return is returned without units, it is either unitless (like the modes) or in atomic units, as the use of Unitful quantities is not finished yet.
 
 The code still only half convince myself, is poorly documented and tested, and is missing a bunch of nice API.
+
+# Appendix
+
+## Derivation of the uncoupled equation
+
+We want to substitute ${\rm \bf x} = {\rm \bf M U z}$ into
+
+$$
+\mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + {\rm \bf x}^T {\rm \bf H} {\rm \bf x}.
+$$
+
+By the definition of the diagonal matrix ${\rm \bf M}$ and the orthogonal matrix ${\rm \bf U}$ we have
+
+$$
+{\rm \bf x}^T {\rm \bf H x} =
+    {\rm \bf z}^T {\rm \bf U}^T {\rm \bf M} {\rm \bf HMUz} = {\rm \bf z}^T {\rm \bf \Omega z},
+$$
+where ${\rm \bf \Omega}$ is diagonal.
+
+For the other term, we use Leibnitz chain rule, starting with the first derivative only
+
+$$
+\frac{\partial}{\partial x_i} =
+    \sum_j \frac{\partial z_j}{\partial x_i} \frac{\partial}{\partial z_j}.
+$$
+
+Next we use ${\rm \bf z} = {\rm \bf U}^T {\rm \bf M}^{-1} {\rm \bf x}$ to compute
+
+$$
+\frac{\partial z_j}{\partial x_i} =
+    \frac{\partial}{\partial x_i} {\rm \bf e}_j^T {\rm \bf U}^T {\rm \bf M}^{-1} {\rm \bf x} =
+    {\rm \bf e}_j^T {\rm \bf U}^T {\rm \bf M}^{-1} {\rm \bf e}_i,
+$$
+
+where ${\rm \bf e}_i$ are the unit vectors of the canonical basis. Since no new
+dependency in ${\rm \bf x}$ or ${\rm \bf z}$ appear, we can apply it
+twice. We transpose one of them however, to make the vector with index $i$
+appear together[^transpose trick]
+
+$$
+\sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} =
+    -\frac{\hbar^2}{2} \sum_{i, j, k} \frac{1}{m_i}
+        \frac{\partial z_k}{\partial x_i}
+        \left[\frac{\partial z_j}{\partial x_i} \right]^T
+    = -\frac{\hbar^2}{2} \sum_{j, k}
+        {\rm \bf e}_k^T {\rm \bf U}^T {\rm \bf M}^{-1}
+        \left[ \sum_i \frac{1}{m_i} {\rm \bf e}_i {\rm \bf e}_i^T \right]
+        {\rm \bf M}^{-1} {\rm \bf U} {\rm \bf e}_j
+        \frac{\partial}{\partial z_j} \frac{\partial}{\partial z_k}.
+$$
+
+Now it would be really beautiful if
+
+$$
+\sum_i \frac{1}{m_i} {\rm \bf e}_i {\rm \bf e}_i^T = {\rm \bf M}^2,
+$$
+
+as it would make everything collapse. Thankfully with our choice of ${\rm \bf M}$ it is exactly what happens.
+
+Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta $\delta_{j k}$, we get, as expected,
+
+$$
+\sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2}
+    = -\frac{\hbar^2}{2} \sum_j \frac{\partial^2}{\partial z_j^2}.
+$$
 
 ## Footnotes
 
@@ -83,10 +148,11 @@ The code still only half convince myself, is poorly documented and tested, and i
 
 [^mass]: Which is the mass of the atom from which this component comes from. Essentially in the vector of mass $m_i$ each mass is repeated 3 times, once for each spatial dimension of each atom.
 
-[^simplify]: This simplify things down the line.
-
 [^posdef]: Eigenvalue are in theory positive or zero, because the Hamiltonian is semi-positive definite and symmetric. Numerically the smallest eigenvalues can be negative instead of exactly zero.
 
 [^annex]: The correct transformation of the derivative requires a bit of work to properly simplify, but trust me you can do it.
 
 [^lunacy]: Which is pure lunacy if you ask me, the code I was using was norming the component in one function, and then immediately unnorming them in the next one. 
+
+[^transpose trick] We transpose a scalar, which is a trick I like very much and
+which is surprisingly useful.
