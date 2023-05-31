@@ -42,7 +42,7 @@ function NormalDecomposition(hessian::Matrix, masses::Vector ; valid_modes = 1:3
 end
 
 function to_atomic_units(x::VecOrMat)
-    @warn "A unitless quantity was given. We assume it was atomic units."
+    @warn "NormalModes: A unitless quantity was given. We assume it was in atomic units."
     return x
 end
 to_atomic_units(x::VecOrMat{<:Quantity}) = austrip.(x)
@@ -109,7 +109,7 @@ function StatsBase.sample(nm::NormalDecomposition, n_samples)
     
     Δx = MU*rand(Δz_dist, n_samples) 
     Δp = Diagonal(nm.m).^2 * MU*rand(Δp_dist, n_samples)
-    return Δx, Δp
+    return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
 end
 
 end
