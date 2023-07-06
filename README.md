@@ -91,6 +91,7 @@ $$
 {\rm \bf x}^T {\rm \bf H x} =
     {\rm \bf z}^T {\rm \bf U}^T {\rm \bf M} {\rm \bf HMUz} = {\rm \bf z}^T {\rm \bf \Omega z},
 $$
+
 where ${\rm \bf \Omega}$ is diagonal.
 
 For the other term, we use Leibnitz chain rule, starting with the first derivative only
