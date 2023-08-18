@@ -4,7 +4,7 @@ This is a simple package that provides utility function to compute normal modes 
 
 The other use of this package is to give me a space to ramble about normal modes, and I will shamelessly use this README for this purpose.
 
-# Proper introduction
+# A proper introduction to normal modes
 
 Because I find the subject confusing, and the introductions describing the problem as well, I think it is worth laying down the basics here.
 
@@ -54,26 +54,18 @@ We can check wikipedia to get whatever we need from it, like for example the Wig
 
 # The package
 
-Now what are the normal modes in all that? That's where it gets confusing and the reason I wrote this section to begin with. Candidates are
+The package aim at providing an interface to normal modes, but what are they? That's where it gets confusing. The andidates are
 
-1. The eigen vectors ${\rm \bf u}_j$ that are the columns of $\rm \bf U$. They are however defined only in the mass weighted space.
-2. The columns of $\rm \bf MU$. They are in real space, but they are are no longer neither normed nor orthogonal.
-3. The columns of $\rm \bf MU$ normalized. Still not orthogonal to each other but at least they have norm 1. However it loses information about $\rm \bf M$ which is needed to convert between $\rm \bf x$ and $\rm \bf z$ or to perform Wigner sampling. So those are ofter return together with so-called *mode masses*, the norm of the columns of $\rm \bf MU$ before being normed[^lunacy].
+1. The eigen vectors ${\rm \bf u}_j$ that (the columns of $\rm \bf U$). They are normed and orthogonal, but live in the mass weighted space.
+2. The columns of $\rm \bf MU$. They live in real space, but they are neither normed nor orthogonal.
+3. The columns of $\rm \bf MU$ normalized. Still not orthogonal to each other but at least they have norm 1. In addition all information about $\rm \bf M$ is removed, which is needed to convert between $\rm \bf x$ and $\rm \bf z$ or to perform Wigner sampling. So those are ofter return together with so-called *mode masses*, the norm of the columns of $\rm \bf MU$ before being normed[^lunacy].
 
-As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. However to avoid a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
-- `normal_modes` : The (normed) normal modes for example to plot or animate them (possible integration with Makie may become available at some point).
+As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. To avoid users a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
+- `normal_modes` : The normal modes (in real space), useful for example to plot them.
 - `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
 - `frequencies` : Frequencies of the modes (in GHz).
 - `wave_number` : Wave numbers of the modes (in inverse cm).
 - `reduced_mass` : Reduced masses of the modes (in AMU), following [this question](https://physics.stackexchange.com/questions/401370/normal-modes-how-to-get-reduced-masses-from-displacement-vectors-atomic-masses) and (I believe) similar to what Gamess does.
-
-The 3 last are returned as Unitful quantity.
-
-# Caveats
-
-Currently all internal calculations are performed in atomic units. If a return is returned without units, it is either unitless (like the modes) or in atomic units, as the use of Unitful quantities is not finished yet.
-
-The code still only half convince myself, is poorly documented and tested, and is missing a bunch of nice API.
 
 # Appendix
 
@@ -112,7 +104,7 @@ $$
 where ${\rm \bf e}_i$ are the unit vectors of the canonical basis. Since no new
 dependency in ${\rm \bf x}$ or ${\rm \bf z}$ appear, we can apply it
 twice. We transpose one of them however, to make the vector with index $i$
-appear together[^transpose trick]
+appear together[^transpose_trick]
 
 $$
 \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} =
@@ -134,7 +126,7 @@ $$
 
 as it would make everything collapse. Thankfully with our choice of ${\rm \bf M}$ it is exactly what happens.
 
-Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta $\delta_{j k}$, we get, as expected,
+Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta, we get, as expected,
 
 $$
 \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2}
@@ -155,5 +147,5 @@ $$
 
 [^lunacy]: Which is pure lunacy if you ask me, the code I was using was norming the component in one function, and then immediately unnorming them in the next one. 
 
-[^transpose trick] We transpose a scalar, which is a trick I like very much and
+[^transpose_trick]: We transpose a scalar, which is a trick I like very much and
 which is surprisingly useful.
