@@ -4,7 +4,7 @@ This is a simple package that provides utility function to compute normal modes 
 
 The other use of this package is to give me a space to ramble about normal modes, and I will shamelessly use this README for this purpose.
 
-# Proper introduction
+# A proper introduction of normal modes
 
 Because I find the subject confusing, and the introductions describing the problem as well, I think it is worth laying down the basics here.
 
@@ -67,14 +67,6 @@ As far as I know the last one is what, despite my strong feelings, is known as *
 - `wave_number` : Wave numbers of the modes (in inverse cm).
 - `reduced_mass` : Reduced masses of the modes (in AMU), following [this question](https://physics.stackexchange.com/questions/401370/normal-modes-how-to-get-reduced-masses-from-displacement-vectors-atomic-masses) and (I believe) similar to what Gamess does.
 
-The 3 last are returned as Unitful quantity.
-
-# Caveats
-
-Currently all internal calculations are performed in atomic units. If a return is returned without units, it is either unitless (like the modes) or in atomic units, as the use of Unitful quantities is not finished yet.
-
-The code still only half convince myself, is poorly documented and tested, and is missing a bunch of nice API.
-
 # Appendix
 
 ## Derivation of the uncoupled equation
@@ -134,7 +126,7 @@ $$
 
 as it would make everything collapse. Thankfully with our choice of ${\rm \bf M}$ it is exactly what happens.
 
-Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta $\delta_{j k}$, we get, as expected,
+Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta $\delta{j k}$, we get, as expected,
 
 $$
 \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2}
