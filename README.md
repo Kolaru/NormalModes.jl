@@ -126,7 +126,7 @@ $$
 
 as it would make everything collapse. Thankfully with our choice of ${\rm \bf M}$ it is exactly what happens.
 
-Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta $\delta{j k}$, we get, as expected,
+Putting it in and using the fact that ${\rm \bf e}_j^T {\rm \bf e}_k$ is a Kroenecker delta, we get, as expected,
 
 $$
 \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2}
