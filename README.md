@@ -147,5 +147,5 @@ $$
 
 [^lunacy]: Which is pure lunacy if you ask me, the code I was using was norming the component in one function, and then immediately unnorming them in the next one. 
 
-[^transpose_trick] We transpose a scalar, which is a trick I like very much and
+[^transpose_trick]: We transpose a scalar, which is a trick I like very much and
 which is surprisingly useful.
