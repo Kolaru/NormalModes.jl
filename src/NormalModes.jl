@@ -4,6 +4,7 @@ using Chain
 using Distributions
 using LinearAlgebra
 using PeriodicTable
+using Printf
 using StatsBase
 using Unitful
 using UnitfulAtomic
@@ -28,8 +29,10 @@ composed of atoms of the given elements, where `n` is the number of atoms.
 The elements can be given as either elements from PeriodicTable, by their
 atomic number or by their mass, defaulting to atomic units when not usng a
 Unitful quantity.
+
+By default the first 
 """
-function NormalDecomposition(hessian::Matrix, elements::Vector ; valid_modes = 1:3length(elements))
+function NormalDecomposition(hessian::AbstractMatrix, elements ; skip_modes = 6)
     hessian = to_atomic_units(hessian)
     masses = to_atomic_masses(elements)
 
@@ -39,42 +42,65 @@ function NormalDecomposition(hessian::Matrix, elements::Vector ; valid_modes = 1
     end
 
     M = Diagonal(m)
-
     Ω, U = eigen(M * hessian * M)
 
     # Sometimes very low frequencies are artificially negative
     ωs = sqrt.(abs.(Ω))
-    perm = sortperm(ωs)[valid_modes]
+    perm = sortperm(ωs)[(skip_modes + 1):end]
     ωs = ωs[perm]
     U = U[:, perm]
 
     return NormalDecomposition(ωs, m, U)
 end
 
-function to_atomic_units(x::VecOrMat)
-    @warn "NormalModes: A unitless quantity was given. We assume it was in atomic units."
-    return x
-end
-to_atomic_units(x::VecOrMat{<:Quantity}) = austrip.(x)
+function Base.show(io::IO, nm::NormalDecomposition)
+    println(io,
+        "NormalDecomposition(n_atoms = $(n_atoms(nm)), n_modes = $(size(nm.U, 2)))"
+    )
+    println(io,
+        "[mode]   [frequency]"
+    )
 
-to_atomic_masses(x) = to_atomic_units(x)
-to_atomic_masses(x::VecOrMat{<:Element}) = [austrip(elem.atomic_mass) for elem in x]
-to_atomic_masses(x::VecOrMat{<:Integer}) = to_atomic_masses([elements[i] for i in x])
+    for (i, k) in enumerate(wave_number(nm))
+        val = @sprintf "%5d %7.0f" i ustrip(k)
+        println(io, "$val $(unit(k))")
+    end
+end
+
+n_atoms(nm::NormalDecomposition) = div(length(nm.m), 3)
+
+function to_atomic_units(x)
+    if !(eltype(x) <: Quantity)
+        @warn "NormalModes: A unitless quantity was given. We assume it is given in atomic units."
+        return x
+    end
+    return austrip.(x)
+end
+
+function to_atomic_masses(x)
+    if eltype(x) <: Element
+        return [austrip(elem.atomic_mass) for elem in x]
+    elseif eltype(x) <: Integer
+        return [austrip(elements[E].atomic_mass) for E in x]
+    else
+        return to_atomic_units(x)
+    end
+end
 
 """
-    project(nm::NormalDecomposition, v)
+    project(nm::NormalDecomposition, geometries)
 
 Project the given geometries (3 x n_atoms x n_obs) on the normal modes.
 """
-function project(nm::NormalDecomposition, v::Array{<:Any, 3})
+function project(nm::NormalDecomposition, geometries::AbstractArray)
     projector = nm.U' * Diagonal(1 ./ nm.m)
-    return projector * reshape(v, length(nm.m), :)
+    return projector * reshape(geometries, length(nm.m), :)
 end
 
 """
     normal_modes(nm::NormalDecomposition)
 
-Real space normal modes according to a normal decomposition.
+Real space normal modes of the normal decomposition.
 """
 function normal_modes(nm::NormalDecomposition)
     modes = Diagonal(nm.m) * nm.U
