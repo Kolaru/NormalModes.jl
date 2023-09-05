@@ -10,13 +10,25 @@ using Unitful
 using UnitfulAtomic
 
 export NormalDecomposition
-export project, normal_modes, frequencies, wave_number, reduced_masses
+export project, normal_modes, normal_mode, frequencies, wave_number, reduced_masses
+export normal_from_positions
 export sample
+
+function mass_weight_matrix(elements)
+    masses = to_atomic_masses(elements)
+
+    m = @chain masses begin
+        vcat([fill(m, 3) for m in _]...)
+        1 ./ sqrt.(_)
+    end
+
+    return Diagonal(m)
+end
 
 # TODO add the number of releveant mode somewhere
 struct NormalDecomposition{T}
     ωs::Vector{T}  # Angular frequencies
-    m::Vector{T}  # Inverse square root of the masses
+    M::Diagonal{T, Vector{T}}  # Inverse square root of the masses
     U::Matrix{T}  # Orthonormal modes
 end
 
@@ -34,14 +46,7 @@ By default the first
 """
 function NormalDecomposition(hessian::AbstractMatrix, elements ; skip_modes = 6)
     hessian = to_atomic_units(hessian)
-    masses = to_atomic_masses(elements)
-
-    m = @chain masses begin
-        vcat([fill(m, 3) for m in _]...)
-        1 ./ sqrt.(_)
-    end
-
-    M = Diagonal(m)
+    M = mass_weight_matrix(elements)
     Ω, U = eigen(M * hessian * M)
 
     # Sometimes very low frequencies are artificially negative
@@ -50,7 +55,7 @@ function NormalDecomposition(hessian::AbstractMatrix, elements ; skip_modes = 6)
     ωs = ωs[perm]
     U = U[:, perm]
 
-    return NormalDecomposition(ωs, m, U)
+    return NormalDecomposition(ωs, M, U)
 end
 
 function Base.show(io::IO, nm::NormalDecomposition)
@@ -67,11 +72,11 @@ function Base.show(io::IO, nm::NormalDecomposition)
     end
 end
 
-n_atoms(nm::NormalDecomposition) = div(length(nm.m), 3)
+n_atoms(nm::NormalDecomposition) = div(size(nm.M, 1), 3)
 
 function to_atomic_units(x)
     if !(eltype(x) <: Quantity)
-        @warn "NormalModes: A unitless quantity was given. We assume it is given in atomic units."
+        @warn "NormalModes: A unitless quantity was given. We assume it was given in atomic units."
         return x
     end
     return austrip.(x)
@@ -93,8 +98,8 @@ end
 Project the given geometries (3 x n_atoms x n_obs) on the normal modes.
 """
 function project(nm::NormalDecomposition, geometries::AbstractArray)
-    projector = nm.U' * Diagonal(1 ./ nm.m)
-    return projector * reshape(geometries, length(nm.m), :)
+    projector = nm.U' * inv(nm.M)
+    return projector * reshape(geometries, size(nm.M, 1), :)
 end
 
 """
@@ -103,14 +108,18 @@ end
 Real space normal modes of the normal decomposition.
 """
 function normal_modes(nm::NormalDecomposition)
-    modes = Diagonal(nm.m) * nm.U
+    modes = nm.M * nm.U
     μs = norm.(eachcol(modes))
     return modes ./ reshape(μs, 1, :)
 end
 
+function normal_mode(nm::NormalDecomposition, mode_number)
+    return reshape(normal_modes(nm)[:, mode_number], 3, :)
+end
+
 function reduced_masses(nm::NormalDecomposition)
-    @chain nm.m begin
-        Diagonal(_) .^ 2
+    @chain nm.M begin
+        _ .^ 2
         _ * (nm.U .^ 2)
         sum(_ ; dims = 1)
         vec(_)
@@ -148,11 +157,23 @@ function StatsBase.sample(nm::NormalDecomposition, n_samples)
     m = 1  # All modes have mass 1
     Δz_dist = MvNormal(Diagonal(1/2 * (hbar ./ (m * nm.ωs))))
     Δp_dist = MvNormal(Diagonal(1/2 * hbar * m * nm.ωs))
-    MU = Diagonal(nm.m) * nm.U
+    MU = nm.M * nm.U
     
     Δx = MU*rand(Δz_dist, n_samples) 
-    Δp = Diagonal(nm.m).^2 * MU*rand(Δp_dist, n_samples)
+    Δp = nm.M.^2 * MU*rand(Δp_dist, n_samples)
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
+end
+
+function normal_from_positions(data, elems ; skip_modes = 6)
+    M = mass_weight_matrix(elems)
+    Uz = inv(M) * to_atomic_units(reshape(data, 3*length(elems), :))
+    MHM = cov(Uz')
+    σs, U = eigen(MHM)
+    perm = reverse(sortperm(σs)[(skip_modes + 1):end])
+    σs = σs[perm]
+    U = U[:, perm]
+
+    return NormalDecomposition(1 ./ 2σs, M, U)
 end
 
 end
