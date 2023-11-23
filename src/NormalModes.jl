@@ -160,7 +160,7 @@ function StatsBase.sample(nm::NormalDecomposition, n_samples)
     
     Δx = MU * rand(Δz_dist, n_samples)
 
-    @warning "I'm really not sure about the sampling in momentum space"
+    @warn "I'm really not sure about the sampling in momentum space"
     Δp = nm.M.^-2 * MU * rand(Δp_dist, n_samples)
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
 end
