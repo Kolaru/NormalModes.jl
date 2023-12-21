@@ -42,7 +42,8 @@ The elements can be given as either elements from PeriodicTable, by their
 atomic number or by their mass, defaulting to atomic units when not usng a
 Unitful quantity.
 
-By default the first 
+By default the 6 modes with lowest frequencies are skipped, as they are likely
+to represent rotations and translations.
 """
 function NormalDecomposition(hessian::AbstractMatrix, elements ; skip_modes = 6)
     hessian = to_atomic_units(hessian)
@@ -105,7 +106,7 @@ end
 """
     normal_modes(nm::NormalDecomposition)
 
-Real space normal modes of the normal decomposition.
+Return the real space normal modes.
 """
 function normal_modes(nm::NormalDecomposition)
     modes = nm.M * nm.U
@@ -113,6 +114,11 @@ function normal_modes(nm::NormalDecomposition)
     return modes ./ reshape(μs, 1, :)
 end
 
+"""
+    normal_mode(nm::NormalDecomposition, n)
+
+Return the n-th real space normal modes.
+"""
 function normal_mode(nm::NormalDecomposition, mode_number)
     return reshape(normal_modes(nm)[:, mode_number], 3, :)
 end
@@ -146,11 +152,12 @@ function wave_number(nm::NormalDecomposition)
 end
 
 """
-    sample(nm::NormalDecomposition, n_samples)
+    sample(nm::NormalDecomposition[, n_samples])
 
-Perform Wigner sampling according to the normal decomposition.
+Perform ground state Wigner sampling according to the normal decomposition.
 
-Return the deviation from the average geometry.
+Return the deviation from the average geometry and the deviation from zero
+momentum.
 """
 function StatsBase.sample(nm::NormalDecomposition, n_samples)
     hbar = 1  # Atomic units
