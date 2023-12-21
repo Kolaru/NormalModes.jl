@@ -154,15 +154,19 @@ Return the deviation from the average geometry.
 """
 function StatsBase.sample(nm::NormalDecomposition, n_samples)
     hbar = 1  # Atomic units
-    Δz_dist = MvNormal(Diagonal(1/2 * (hbar ./ nm.ωs)))
+    Δx_dist = MvNormal(Diagonal(1/2 * (hbar ./ nm.ωs)))
     Δp_dist = MvNormal(Diagonal(1/2 * hbar * nm.ωs))
     MU = nm.M * nm.U
     
-    Δx = MU * rand(Δz_dist, n_samples)
+    Δx = MU * rand(Δx_dist, n_samples)
+    Δp = inv(nm.M)^2 * MU * rand(Δp_dist, n_samples)
 
-    @warn "I'm really not sure about the sampling in momentum space"
-    Δp = nm.M.^-2 * MU * rand(Δp_dist, n_samples)
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
+end
+
+function StatsBase.sample(nm::NormalDecomposition)
+    geometries, momenta = sample(nm, 1)
+    return geometries[:, 1], momenta[:, 1]
 end
 
 function normal_from_positions(data, elems ; skip_modes = 6)
