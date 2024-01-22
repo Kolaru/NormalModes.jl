@@ -5,6 +5,7 @@ using Distributions
 using LinearAlgebra
 using PeriodicTable
 using Printf
+using Random
 using StatsBase
 using Unitful
 using UnitfulAtomic
@@ -159,22 +160,25 @@ Perform ground state Wigner sampling according to the normal decomposition.
 Return the deviation from the average geometry and the deviation from zero
 momentum.
 """
-function StatsBase.sample(nm::NormalDecomposition, n_samples)
+function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples)
     hbar = 1  # Atomic units
     Δx_dist = MvNormal(Diagonal(1/2 * (hbar ./ nm.ωs)))
     Δp_dist = MvNormal(Diagonal(1/2 * hbar * nm.ωs))
     MU = nm.M * nm.U
     
-    Δx = MU * rand(Δx_dist, n_samples)
-    Δp = inv(nm.M)^2 * MU * rand(Δp_dist, n_samples)
+    Δx = MU * rand(rng, Δx_dist, n_samples)
+    Δp = inv(nm.M)^2 * MU * rand(rng, Δp_dist, n_samples)
 
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
 end
 
-function StatsBase.sample(nm::NormalDecomposition)
-    geometries, momenta = sample(nm, 1)
+function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition)
+    geometries, momenta = sample(rng, nm, 1)
     return geometries[:, 1], momenta[:, 1]
 end
+
+StatsBase.sample(nm::NormalDecomposition, n_samples) = sample(Random.GLOBAL_RNG, nm, n_samples)
+StatsBase.sample(nm::NormalDecomposition) = sample(Random.GLOBAL_RNG, nm)
 
 function normal_from_positions(data, elems ; skip_modes = 6)
     M = mass_weight_matrix(elems)
