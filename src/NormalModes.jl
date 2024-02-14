@@ -162,12 +162,12 @@ momentum.
 """
 function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples)
     hbar = 1  # Atomic units
+    X = nm.M * nm.U
     Δx_dist = MvNormal(Diagonal(1/2 * (hbar ./ nm.ωs)))
     Δp_dist = MvNormal(Diagonal(1/2 * hbar * nm.ωs))
-    MU = nm.M * nm.U
     
-    Δx = MU * rand(rng, Δx_dist, n_samples)
-    Δp = inv(nm.M)^2 * MU * rand(rng, Δp_dist, n_samples)
+    Δx = X * rand(rng, Δx_dist, n_samples)
+    Δp = inv(nm.M)^2 * X * rand(rng, Δp_dist, n_samples)
 
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
 end
