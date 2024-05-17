@@ -13,8 +13,12 @@ using UnitfulAtomic
 export NormalDecomposition
 export project, project_per_atom
 export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
-export normal_from_positions
+export spatial_variances, momentum_variances, atom_spatial_variances
 export sample
+
+export animate
+
+const hbar = 1  # Atomic units
 
 function mass_weight_matrix(elements)
     masses = to_atomic_masses(elements)
@@ -126,6 +130,7 @@ Return the real space normal modes.
 """
 function normal_modes(nm::NormalDecomposition)
     modes = nm.M * nm.U
+    return modes
     μs = norm.(eachcol(modes))
     return modes ./ reshape(μs, 1, :)
 end
@@ -167,6 +172,14 @@ function wave_number(nm::NormalDecomposition)
     end
 end
 
+spatial_variances(nm::NormalDecomposition) = 1/2 * (hbar ./ nm.ωs)
+momentum_variances(nm::NormalDecomposition) = 1/2 * hbar * nm.ωs
+
+function atom_spatial_variances(nm::NormalDecomposition)
+    X = nm.M * nm.U
+    return abs.(X .* spatial_variances(nm)')
+end
+
 """
     sample(nm::NormalDecomposition[, n_samples])
 
@@ -176,10 +189,9 @@ Return the deviation from the average geometry and the deviation from zero
 momentum.
 """
 function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples)
-    hbar = 1  # Atomic units
     X = nm.M * nm.U
-    Δx_dist = MvNormal(Diagonal(1/2 * (hbar ./ nm.ωs)))
-    Δp_dist = MvNormal(Diagonal(1/2 * hbar * nm.ωs))
+    Δx_dist = MvNormal(Diagonal(spatial_variances(nm)))
+    Δp_dist = MvNormal(Diagonal(momentum_variances(nm)))
     
     Δx = X * rand(rng, Δx_dist, n_samples)
     Δp = inv(nm.M)^2 * X * rand(rng, Δp_dist, n_samples)
@@ -194,5 +206,7 @@ end
 
 StatsBase.sample(nm::NormalDecomposition, n_samples) = sample(Random.GLOBAL_RNG, nm, n_samples)
 StatsBase.sample(nm::NormalDecomposition) = sample(Random.GLOBAL_RNG, nm)
+
+function animate() end
 
 end
