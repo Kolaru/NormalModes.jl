@@ -11,7 +11,7 @@ using Unitful
 using UnitfulAtomic
 
 export NormalDecomposition
-export project, project_per_atom
+export project_geometries, project_momenta, project_per_atom
 export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
 export spatial_variances, momentum_variances, atom_spatial_variances
 export sample
@@ -33,7 +33,7 @@ end
 
 # TODO add the number of releveant mode somewhere
 struct NormalDecomposition{T}
-    elements::Vector{Element}
+    elements::Vector
     ωs::Vector{T}  # Angular frequencies
     M::Diagonal{T, Vector{T}}  # Inverse square root of the masses
     U::Matrix{T}  # Orthonormal modes
@@ -101,13 +101,18 @@ function to_atomic_masses(x)
 end
 
 """
-    project(nm::NormalDecomposition, geometries)
+    project_geometries(nm::NormalDecomposition, geometries)
 
 Project the given geometries (3 x n_atoms x n_obs) on the normal modes.
 """
-function project(nm::NormalDecomposition, geometries::AbstractArray)
+function project_geometries(nm::NormalDecomposition, geometries::AbstractArray)
     projector = nm.U' * inv(nm.M)
     return projector * reshape(geometries, size(nm.M, 1), :)
+end
+
+function project_momenta(nm::NormalDecomposition, momenta::AbstractArray)
+    projector = nm.U' * nm.M
+    return projector * reshape(momenta, size(nm.M, 1), :)
 end
 
 function project_per_atom(nm::NormalDecomposition, geometries)
