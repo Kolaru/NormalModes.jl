@@ -13,6 +13,7 @@ using UnitfulAtomic
 export NormalDecomposition
 export project_geometries, project_momenta, project_per_atom
 export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
+export omegas
 export spatial_variances, momentum_variances, atom_spatial_variances
 export sample
 
@@ -161,6 +162,8 @@ function reduced_masses(nm::NormalDecomposition)
     end
 end
 
+omegas(nm::NormalDecomposition) = nm.ωs * aunit(u"1/s")
+
 function frequencies(nm::NormalDecomposition)
     @chain nm.ωs begin
         _ ./ 2π 
@@ -194,12 +197,11 @@ Return the deviation from the average geometry and the deviation from zero
 momentum.
 """
 function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples)
-    X = nm.M * nm.U
     Δx_dist = MvNormal(Diagonal(spatial_variances(nm)))
     Δp_dist = MvNormal(Diagonal(momentum_variances(nm)))
     
-    Δx = X * rand(rng, Δx_dist, n_samples)
-    Δp = inv(nm.M)^2 * X * rand(rng, Δp_dist, n_samples)
+    Δx = nm.M * nm.U * rand(rng, Δx_dist, n_samples)
+    Δp = inv(nm.M) * nm.U * rand(rng, Δp_dist, n_samples)
 
     return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
 end
