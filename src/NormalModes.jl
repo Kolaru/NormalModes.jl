@@ -14,7 +14,9 @@ export NormalDecomposition
 export project_geometries, project_momenta, project_per_atom
 export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
 export omegas
-export spatial_variances, momentum_variances, atom_spatial_variances
+export spatial_variances, momentum_variances
+export spatial_fluctuation, momentum_fluctuation
+export spatial_Σ, momentum_Σ
 export sample
 
 export animate
@@ -183,10 +185,36 @@ end
 spatial_variances(nm::NormalDecomposition) = 1/2 * (hbar ./ nm.ωs)
 momentum_variances(nm::NormalDecomposition) = 1/2 * hbar * nm.ωs
 
-function atom_spatial_variances(nm::NormalDecomposition)
-    X = nm.M * nm.U
-    return abs.(X .* spatial_variances(nm)')
+function spatial_fluctuation(nm::NormalDecomposition)
+    n = length(nm.ωs)
+    x = zeros(n, n)
+    Σ = spatial_variances(nm)
+
+    for k in 1:n
+        x[k, k] = sqrt(Σ[k])
+    end
+    return reshape(nm.M * nm.U * x, 3, :, n) * aunit(u"m")
 end
+
+function momentum_fluctuation(nm::NormalDecomposition)
+    n = length(nm.ωs)
+    p = zeros(n, n)
+    Σ = momentum_variances(nm)
+
+    for k in 1:n
+        p[k, k] = sqrt(Σ[k])
+    end
+    return reshape(inv(nm.M) * nm.U * p, 3, :, n) * aunit(u"kg * m / s")
+end
+
+function spatial_Σ(nm::NormalDecomposition)
+    nm.M * nm.U * Diagonal(spatial_variances(nm)) * nm.U' * nm.M' * aunit(u"m^2")
+end
+
+function momentum_Σ(nm::NormalDecomposition)
+    inv(nm.M) * nm.U * Diagonal(momentum_variances(nm)) * nm.U' * inv(nm.M)' * aunit(u"kg^2*m^2/s^2")
+end
+
 
 """
     sample(nm::NormalDecomposition[, n_samples])
