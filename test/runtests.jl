@@ -1,4 +1,5 @@
 using DelimitedFiles
+using Distributions
 using NormalModes 
 using PeriodicTable
 using Statistics
@@ -9,8 +10,10 @@ using UnitfulAtomic
 example_folder = "../example"
 ħ = auconvert(1u"ħ")
 
-@testset "NormalModes.jl" begin
-    @testset "Iodopyridine" begin
+begin
+    systems = Dict()
+
+    let
         folder = joinpath(example_folder, "iodopyridine")
         Z = vec(readdlm(joinpath(folder, "Z.txt"), Int))
         masses = [elements[z].atomic_mass for z in Z]
@@ -18,6 +21,12 @@ example_folder = "../example"
 
         nm = NormalDecomposition(hessian, Z)
 
+        systems["iodopyridine"] = nm
+    end
+end
+
+@testset "Basics" begin
+    @testset "$name" for (name, nm) in systems
         xs, ps = sample(nm, 1000000)
         zs = project_geometries(nm, xs)
         pzs = project_momenta(nm, ps)

@@ -10,16 +10,16 @@ using StatsBase
 using Unitful
 using UnitfulAtomic
 
+import PhysicalConstants.CODATA2018: k_B
+
 export NormalDecomposition
 export project_geometries, project_momenta, project_per_atom
 export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
-export omegas
+export energies, omegas
 export spatial_variances, momentum_variances
 export spatial_fluctuation, momentum_fluctuation
 export spatial_Σ, momentum_Σ
-export sample
-
-export animate
+export sample, wigner_sample
 
 const hbar = 1  # Atomic units
 
@@ -96,7 +96,7 @@ end
 function to_atomic_masses(x)
     if eltype(x) <: Element
         return [austrip(elem.atomic_mass) for elem in x]
-    elseif eltype(x) <: Integer
+    elseif eltype(x) <: Union{Integer, Symbol}
         return [austrip(elements[E].atomic_mass) for E in x]
     else
         return to_atomic_units(x)
@@ -104,18 +104,41 @@ function to_atomic_masses(x)
 end
 
 """
-    project_geometries(nm::NormalDecomposition, geometries)
+    project_displacements(nm::NormalDecomposition, displacements)
 
-Project the given geometries (3 x n_atoms x n_obs) on the normal modes.
+Project the given displacements (3 x n_atoms x n_obs) from the equilibrium
+geometry on the normal modes.
 """
-function project_geometries(nm::NormalDecomposition, geometries::AbstractArray)
+function project_geometries(nm::NormalDecomposition, displacements::AbstractArray)
     projector = nm.U' * inv(nm.M)
-    return projector * reshape(geometries, size(nm.M, 1), :)
+    return projector * reshape(displacements, size(nm.M, 1), :)
 end
 
+"""
+    project_momenta(nm::NormalDecomposition, geometries)
+
+Project the given momenta (3 x n_atoms x n_obs) on the normal modes.
+"""
 function project_momenta(nm::NormalDecomposition, momenta::AbstractArray)
     projector = nm.U' * nm.M
     return projector * reshape(momenta, size(nm.M, 1), :)
+end
+
+function wigner_pdf(nm::NormalDecomposition, displacements, momenta, T = 0.0u"K")
+    zs = project_geometries(nm, displacements)
+    pzs = project_momenta(nm, momenta)
+
+    zs_dist = MvNormal(Diagonal(spatial_variances(nm, T)))
+    pz_dist = MvNormal(Diagonal(momentum_variances(nm, T)))
+
+    return pdf(zs_dist, zs) .* pdf(pz_dist, pzs)
+end
+
+function temperature_bias(nm, displacements, momenta, T)
+    w0 = wigner_pdf(nm, displacements, momenta, 0.0u"K")
+    wT = wigner_pdf(nm, displacements, momenta, T)
+
+    return wT ./ w0
 end
 
 function project_per_atom(nm::NormalDecomposition, geometries)
@@ -174,6 +197,10 @@ function frequencies(nm::NormalDecomposition)
     end
 end
 
+function energies(nm::NormalDecomposition)
+    return hbar * nm.ωs * aunit(u"J")
+end
+
 function wave_number(nm::NormalDecomposition)
     @chain nm begin
         frequencies(_)
@@ -182,8 +209,30 @@ function wave_number(nm::NormalDecomposition)
     end
 end
 
+"""
+    thermal_widenings(nm::NormalDecomposition, T::Quantity)
+
+Widening of the distribution for Wigner sampling in the harmonic approximation.
+"""
+function thermal_widenings(nm::NormalDecomposition, T::Quantity)
+    T = uconvert(u"K", T)
+
+    T < 0u"K" && throw(DomainError(T, "temperature can not be below absolute zero"))
+    T == 0u"K" && return ones(length(energies(nm)))
+
+    return 1 ./ tanh.(upreferred.(energies(nm) ./ (k_B * T)))
+end
+
 spatial_variances(nm::NormalDecomposition) = 1/2 * (hbar ./ nm.ωs)
 momentum_variances(nm::NormalDecomposition) = 1/2 * hbar * nm.ωs
+
+function spatial_variances(nm::NormalDecomposition, T::Quantity)
+    return spatial_variances(nm) .* thermal_widenings(nm, T)
+end
+
+function momentum_variances(nm::NormalDecomposition, T::Quantity)
+    return momentum_variances(nm) .* thermal_widenings(nm, T)
+end
 
 function spatial_fluctuation(nm::NormalDecomposition)
     n = length(nm.ωs)
@@ -224,7 +273,7 @@ Perform ground state Wigner sampling according to the normal decomposition.
 Return the deviation from the average geometry and the deviation from zero
 momentum.
 """
-function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples)
+function StatsBase.sample(rng::AbstractRNG, nm::NormalDecomposition, n_samples::Integer)
     Δx_dist = MvNormal(Diagonal(spatial_variances(nm)))
     Δp_dist = MvNormal(Diagonal(momentum_variances(nm)))
     
@@ -242,6 +291,22 @@ end
 StatsBase.sample(nm::NormalDecomposition, n_samples) = sample(Random.GLOBAL_RNG, nm, n_samples)
 StatsBase.sample(nm::NormalDecomposition) = sample(Random.GLOBAL_RNG, nm)
 
-function animate() end
+function wigner_sample(rng::AbstractRNG, nm::NormalDecomposition, T::Quantity, n_samples::Integer)
+    Δx_dist = MvNormal(Diagonal(spatial_variances(nm, T)))
+    Δp_dist = MvNormal(Diagonal(momentum_variances(nm, T)))
+    
+    Δx = nm.M * nm.U * rand(rng, Δx_dist, n_samples)
+    Δp = inv(nm.M) * nm.U * rand(rng, Δp_dist, n_samples)
+
+    return Δx * aunit(u"m"), Δp * aunit(u"kg*m/s")
+end
+
+function wigner_sample(rng::AbstractRNG, nm::NormalDecomposition, T::Quantity)
+    geometries, momenta = wigner_sample(rng, nm, T, 1)
+    return geometries[:, 1], momenta[:, 1]
+end
+
+wigner_sample(nm::NormalDecomposition, T, n_samples) = wigner_sample(Random.GLOBAL_RNG, nm, T, n_samples)
+wigner_sample(nm::NormalDecomposition, T) = wigner_sample(Random.GLOBAL_RNG, nm, T)
 
 end
