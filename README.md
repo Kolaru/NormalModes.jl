@@ -13,19 +13,19 @@ We are interested in the ground state of an equilibrium Hamiltonian $\mathcal{H}
 Then we do a Taylor expansion of the potential, leading to
 
 $$
-\mathcal{V}({\rm \bf x}) = V_0 + \nabla \mathcal{V}({\rm \bf x}) + {\rm \bf x}^T {\rm \bf H} {\rm \bf x} + \mathcal{O}({\rm \bf x}^3),
+\mathcal{V}({\rm \bf x}) = V_0 + \nabla \mathcal{V}({\rm \bf x}) + \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x} + \mathcal{O}({\rm \bf x}^3),
 $$
 
 where ${\rm \bf H}$ is the Hessian matrix of the potential[^potential], and $V_0$ a constant shift that we can set to zero. Also since we are assuming to be at equilibrium, the gradient $\nabla \mathcal{V}({\rm \bf x})$ is zero as well. This leads to the approximation
 
 $$
-\mathcal{V}({\rm \bf x}) = {\rm \bf x}^T {\rm \bf H} {\rm \bf x}
+\mathcal{V}({\rm \bf x}) = \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x}
 $$
 
 and the Hamiltonian
 
 $$
-\mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + {\rm \bf x}^T {\rm \bf H} {\rm \bf x},
+\mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x},
 $$
 
 where $m_i$ is the mass of dimension $i$[^mass]. Now this is the Hamiltionian of a set of coupled harmonic oscillator, and we will change basis to rewrite it as a system of *uncoupled* harmonic oscillators.
