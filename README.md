@@ -47,7 +47,7 @@ $$
 Inserting it in the Hamiltonian we get the decoupled system of harmonic oscillators (see the annex for the derivation)
 
 $$
-\mathcal{H} = \sum_j \frac{-\hbar^2}{2} \frac{\partial^2}{\partial z_j^2} + \omega_j^2 z_j^2.
+\mathcal{H} = \sum_j \frac{-\hbar^2}{2} \frac{\partial^2}{\partial z_j^2} + \frac{1}{2} \omega_j^2 z_j^2.
 $$
 
 We can check wikipedia to get whatever we need from it, like for example the Wigner distribution for sampling, and it is how it was implemented in the package.
@@ -74,14 +74,14 @@ As far as I know the last one is what, despite my strong feelings, is known as *
 We want to substitute ${\rm \bf x} = {\rm \bf M U z}$ into
 
 $$
-\mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + {\rm \bf x}^T {\rm \bf H} {\rm \bf x}.
+\mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x}.
 $$
 
 By the definition of the diagonal matrix ${\rm \bf M}$ and the orthogonal matrix ${\rm \bf U}$ we have
 
 $$
-{\rm \bf x}^T {\rm \bf H x} =
-    {\rm \bf z}^T {\rm \bf U}^T {\rm \bf M} {\rm \bf HMUz} = {\rm \bf z}^T {\rm \bf \Omega z},
+\frac{1}{2} {\rm \bf x}^T {\rm \bf H x} =
+    \frac{1}{2} {\rm \bf z}^T {\rm \bf U}^T {\rm \bf M} {\rm \bf HMUz} = \frac{1}{2} {\rm \bf z}^T {\rm \bf \Omega z},
 $$
 
 where ${\rm \bf \Omega}$ is diagonal.
