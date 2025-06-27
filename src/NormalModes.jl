@@ -1,5 +1,6 @@
 module NormalModes
 
+using AtomicSystems
 using Chain
 using Distributions
 using LinearAlgebra
@@ -69,6 +70,9 @@ function NormalDecomposition(hessian::AbstractMatrix, elements ; skip_modes = 6)
     return NormalDecomposition(elements, ωs, M, U)
 end
 
+NormalDecomposition(hessian::AbstractMatrix, system::AtomicSystem ; skip_modes = 6) =
+    NormalDecomposition(hessian, [A.element for A in system] ; skip_modes)
+
 function Base.show(io::IO, nm::NormalDecomposition)
     println(io,
         "NormalDecomposition(n_atoms = $(n_atoms(nm)), n_modes = $(size(nm.U, 2)))"
@@ -93,15 +97,17 @@ function to_atomic_units(x)
     return austrip.(x)
 end
 
-function to_atomic_masses(x)
-    if eltype(x) <: Element
-        return [austrip(elem.atomic_mass) for elem in x]
-    elseif eltype(x) <: Union{Integer, Symbol}
-        return [austrip(elements[E].atomic_mass) for E in x]
-    else
-        return to_atomic_units(x)
-    end
+function to_atomic_masses(x::AbstractVector{<:Element})
+    return [austrip(elem.atomic_mass) for elem in x]
 end
+
+function to_atomic_masses(x::AbstractVector{<:Union{Integer, Symbol}})
+    return [austrip(elements[E].atomic_mass) for E in x]
+end
+
+to_atomic_masses(system::AtomicSystem) = austrip.(atom_masses(system))
+
+to_atomic_masses(x) = to_atomic_units(x)
 
 """
     project_displacements(nm::NormalDecomposition, displacements)

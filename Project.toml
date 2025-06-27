@@ -4,6 +4,7 @@ authors = ["Benoît Richard <benoit.richard@desy.de> and contributors"]
 version = "0.1.0"
 
 [deps]
+AtomicSystems = "56d0e77e-dbc1-4298-ac1b-edea21caa27a"
 Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
