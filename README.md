@@ -1,12 +1,12 @@
 # NormalModes.jl
 
-This is a simple package that provides utility function to compute normal modes from a Hessian matrix, and then work with them.
+This is a simple package that provides utility functions to compute normal modes from a Hessian matrix.
 
-The other use of this package is to give me a space to ramble about normal modes, and I will shamelessly use this README for this purpose.
+Additionally, this package gives me a space to ramble about normal modes and I am shamelessly use this README for this purpose.
 
 # A proper introduction to normal modes
 
-Because I find the subject confusing, and the introductions describing the problem as well, I think it is worth laying down the basics here.
+I find the subject confusing and the introductions describing the problem were of little help to me. Therefore, I think it is worth laying down the basics here.
 
 We are interested in the ground state of an equilibrium Hamiltonian $\mathcal{H} = \mathcal{T} + \mathcal{V}$, whith $\mathcal{T}$ the kinetic energy operator and $\mathcal{V}$ the potential energy operator. We note ${\rm \bf x}$ the vector of concatenated position, that is ${\rm \bf x} = {\rm vcat}({\rm \bf r}_1, {\rm \bf r}_2, {\rm \bf r}_3, \dots)$[^julia], with ${\rm \bf r}_A$ the position of atoms $A$.
 
@@ -16,56 +16,64 @@ $$
 \mathcal{V}({\rm \bf x}) = V_0 + \nabla \mathcal{V}({\rm \bf x}) + \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x} + \mathcal{O}({\rm \bf x}^3),
 $$
 
-where ${\rm \bf H}$ is the Hessian matrix of the potential[^potential], and $V_0$ a constant shift that we can set to zero. Also since we are assuming to be at equilibrium, the gradient $\nabla \mathcal{V}({\rm \bf x})$ is zero as well. This leads to the approximation
+where ${\rm \bf H}$ is the Hessian matrix of the potential[^potential], and $V_0$ a constant shift that we set to zero without loss of generality. Moreover, we are assuming to be at equilibrium, therefore the gradient $\nabla \mathcal{V}({\rm \bf x})$ is zero (we are a local minimum of the potential energy). This leads to the approximation
 
 $$
-\mathcal{V}({\rm \bf x}) = \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x}
+\mathcal{V}({\rm \bf x}) = \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x}.
 $$
 
-and the Hamiltonian
+With this potential the Hamiltonian becomes
 
 $$
 \mathcal{H} = \sum_i \frac{-\hbar^2}{2 m_i} \frac{\partial^2}{\partial x_i^2} + \frac{1}{2} {\rm \bf x}^T {\rm \bf H} {\rm \bf x},
 $$
 
-where $m_i$ is the mass of dimension $i$[^mass]. Now this is the Hamiltionian of a set of coupled harmonic oscillator, and we will change basis to rewrite it as a system of *uncoupled* harmonic oscillators.
+where $m_i$ is the mass of dimension $i$[^mass].
 
-We introduce the diagonal mass weighting matrix ${\rm \bf M}$ with ${\rm \bf M}_{ii} = m_i^{-\frac{1}{2}}$. We do an eigendecomposition of the weighted Hermitian $\rm \bf M H M$ as
+This is the Hamiltionian of a system of coupled harmonic oscillators. The standard procedure is here to change basis and rewrite it as a system of *uncoupled* harmonic oscillators.
+To this end, we introduce the diagonal mass weighting matrix ${\rm \bf M}$ with ${\rm \bf M}_{ii} = m_i^{-\frac{1}{2}}$.
+Then we perform an eigendecomposition of the weighted Hermitian $\rm \bf M H M$ as
 
 $$
 {\rm \bf M H M} = {\rm \bf U \Omega U}^T,
 $$
 
-where $\rm \bf U$ is the matrix of vector and $\rm \bf \Omega$ the diagonal matrix of eigenvalues, that we write ${\rm \bf \Omega}_{ii} = \omega_i^2$[^posdef].
+where $\rm \bf U$ is the matrix of eigenvectors and $\rm \bf \Omega$ the diagonal matrix of eigenvalues.
+Since we are looking at a stable equilibrium, all eigenvalues must be positive and we write them as ${\rm \bf \Omega}_{ii} = \omega_i^2$[^posdef].
 
-We have what we need to define the new coordinates $\rm \bf z$ that we need, namely through
+Using ${\rm \bf M}$ and ${\rm \bf U}$ we can define the new coordinates $\rm \bf z$ as
 
 $$
 {\rm \bf x} = {\rm \bf M U z}.
 $$
 
-Inserting it in the Hamiltonian we get the decoupled system of harmonic oscillators (see the annex for the derivation)
+Inserting it in the Hamiltonian we get the following decoupled system of harmonic oscillators (see the annex for the derivation)
 
 $$
 \mathcal{H} = \sum_j \frac{-\hbar^2}{2} \frac{\partial^2}{\partial z_j^2} + \frac{1}{2} \omega_j^2 z_j^2.
 $$
 
-We can check wikipedia to get whatever we need from it, like for example the Wigner distribution for sampling, and it is how it was implemented in the package.
+From this expression, we can get the normal modes and all associated quantities.
 
 # The package
 
-The package aim at providing an interface to normal modes, but what are they? That's where it gets confusing. The andidates are
+The package aims at providing an interface to normal modes, but what do we mean by normal modes exactly?
+There are unfortunately multiple reasonnable candidates, namely
 
-1. The eigen vectors ${\rm \bf u}_j$ that (the columns of $\rm \bf U$). They are normed and orthogonal, but live in the mass weighted space.
+1. The eigen vectors ${\rm \bf u}_j$ which are the columns of $\rm \bf U$. They are normed and orthogonal, but live in the mass weighted space.
 2. The columns of $\rm \bf MU$. They live in real space, but they are neither normed nor orthogonal.
-3. The columns of $\rm \bf MU$ normalized. Still not orthogonal to each other but at least they have norm 1. In addition all information about $\rm \bf M$ is removed, which is needed to convert between $\rm \bf x$ and $\rm \bf z$ or to perform Wigner sampling. So those are ofter return together with so-called *mode masses*, the norm of the columns of $\rm \bf MU$ before being normed[^lunacy].
+3. The columns of $\rm \bf MU$ normalized. They are still not orthogonal, but at least they have norm 1. In addition, all information about $\rm \bf M$ is removed, which is often needed for further calculations. So those are ofter return together with so-called *mode masses*, the norm of the columns of $\rm \bf MU$[^lunacy].
 
-As far as I know the last one is what, despite my strong feelings, is known as *normal modes*. To avoid users a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts. Available are
-- `normal_modes` : The normal modes (in real space), useful for example to plot them.
-- `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
+As far as I understand, the last ones are the quantities known as *normal modes*.
+Thankfully, to avoid users a slow descent into madness, the package provides a specific object type `NormalDecomposition(hessian)`, that stores the useful information and encapsulate the inner confusing parts.
+The available methods acting on a `NormalDecompoisition` are
+- `normal_modes` : The normal modes (in real space). They are useful to see the effect off the vibration on the geometry, for example when plotting them.
 - `frequencies` : Frequencies of the modes (in GHz).
-- `wave_number` : Wave numbers of the modes (in inverse cm).
+- `wave_number` : Wave numbers of the modes (in inverse cm). Sometimes those are also called "frequencies", as they are directly proportional to each other.
 - `reduced_mass` : Reduced masses of the modes (in AMU), following [this question](https://physics.stackexchange.com/questions/401370/normal-modes-how-to-get-reduced-masses-from-displacement-vectors-atomic-masses) and (I believe) similar to what Gamess does.
+- `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
+
+All the values are given as `Unitful` quantities.
 
 # Appendix
 
@@ -137,15 +145,15 @@ $$
 
 [^julia]: I am indeed using the julia function `vcat` to describe this mathematical operation, I have never found a better way to express it.
 
-[^potential]: This makes sense because in the position representation the potential is not an operator but just a scalar.
+[^potential]: Which is well defined because in the position representation the potential is just a scalar (and not an operator).
 
-[^mass]: Which is the mass of the atom from which this component comes from. Essentially in the vector of mass $m_i$ each mass is repeated 3 times, once for each spatial dimension of each atom.
+[^mass]: Which is the mass of the atom from which this component comes from. In other words, in the mass vector, each mass is repeated 3 times, once for each spatial dimension.
 
 [^posdef]: Eigenvalue are in theory positive or zero, because the Hamiltonian is semi-positive definite and symmetric. Numerically the smallest eigenvalues can be negative instead of exactly zero.
 
 [^annex]: The correct transformation of the derivative requires a bit of work to properly simplify, but trust me you can do it.
 
-[^lunacy]: Which is pure lunacy if you ask me, the code I was using was norming the component in one function, and then immediately unnorming them in the next one. 
+[^lunacy]: Which is pure lunacy if you ask me. 
 
 [^transpose_trick]: We transpose a scalar, which is a trick I like very much and
 which is surprisingly useful.
