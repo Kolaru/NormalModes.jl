@@ -15,7 +15,7 @@ import PhysicalConstants.CODATA2018: k_B
 
 export NormalDecomposition
 export project_geometries, project_momenta, project_per_atom
-export normal_modes, normal_mode, frequencies, wave_number, reduced_masses
+export normal_modes, normal_mode, frequencies, wave_numbers, reduced_masses
 export energies, omegas
 export spatial_variances, momentum_variances
 export spatial_fluctuation, momentum_fluctuation
@@ -81,7 +81,7 @@ function Base.show(io::IO, nm::NormalDecomposition)
         "[mode]   [frequency]"
     )
 
-    for (i, k) in enumerate(wave_number(nm))
+    for (i, k) in enumerate(wave_numbers(nm))
         val = @sprintf "%5d %7.0f" i ustrip(k)
         println(io, "$val $(unit(k))")
     end
@@ -207,7 +207,7 @@ function energies(nm::NormalDecomposition)
     return hbar * nm.ωs * aunit(u"J")
 end
 
-function wave_number(nm::NormalDecomposition)
+function wave_numbers(nm::NormalDecomposition)
     @chain nm begin
         frequencies(_)
         _ ./ 1u"c"  # Divide by the speed of light
@@ -314,5 +314,8 @@ end
 
 wigner_sample(nm::NormalDecomposition, T, n_samples) = wigner_sample(Random.GLOBAL_RNG, nm, T, n_samples)
 wigner_sample(nm::NormalDecomposition, T) = wigner_sample(Random.GLOBAL_RNG, nm, T)
+
+include("loading.jl")
+export load_orca
 
 end

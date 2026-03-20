@@ -69,7 +69,7 @@ Thankfully, to avoid users a slow descent into madness, the package provides a s
 The available methods acting on a `NormalDecompoisition` are
 - `normal_modes` : The normal modes (in real space). They are useful to see the effect off the vibration on the geometry, for example when plotting them.
 - `frequencies` : Frequencies of the modes (in GHz).
-- `wave_number` : Wave numbers of the modes (in inverse cm). Sometimes those are also called "frequencies", as they are directly proportional to each other.
+- `wave_numbers` : Wave numbers of the modes (in inverse cm). Sometimes those are also called "frequencies", as they are directly proportional to each other.
 - `reduced_mass` : Reduced masses of the modes (in AMU), following [this question](https://physics.stackexchange.com/questions/401370/normal-modes-how-to-get-reduced-masses-from-displacement-vectors-atomic-masses) and (I believe) similar to what Gamess does.
 - `sample` : Perform Wigner sampling, and get the displacements from the mean for positions and momenta.
 
