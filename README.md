@@ -75,6 +75,10 @@ The available methods acting on a `NormalDecompoisition` are
 
 All the values are given as `Unitful` quantities.
 
+## Tools
+
+Data can be loaded from an ORCA hess file, using `load_orca(filename, NormalDecomposition)`.
+
 # Appendix
 
 ## Derivation of the uncoupled equation
