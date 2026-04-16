@@ -50,7 +50,8 @@ function load_orca(file)
 
             if key == "atoms"
                 data["atoms"] = Symbol.(matrix[:, 1])
-                data["positions"] = parse.(Float64, matrix[:, 2:end])
+                data["masses"] = parse.(Float64, matrix[:, 2])
+                data["positions"] = permutedims(parse.(Float64, matrix[:, 3:end]))
             elseif key == "vibrational_frequencies"
                 data["vibrational_frequencies"] = parse.(Float64, matrix[:, 2])
             else
@@ -69,10 +70,8 @@ function load_orca(file)
         data[key] = data[key] * unit
     end
 
-    return data
-end
+    data["normal_decomposition"] = NormalDecomposition(data["hessian"], data["atoms"])
+    data["system"] = AtomicSystem(data["atoms"])
 
-function load_orca(::Type{NormalDecomposition}, file)
-    data = load_orca(file)
-    return NormalDecomposition(data["hessian"], data["atoms"])
+    return data
 end

@@ -45,7 +45,7 @@ end
 
 @testset "Orca" begin
     data = load_orca("../example/formic_acid/mol_opt.hess")
-    nm = load_orca(NormalDecomposition, "../example/formic_acid/mol_opt.hess")
+    nm = data["normal_decomposition"]
 
     @test data["vibrational_frequencies"][7:end] ≈ wave_numbers(nm) rtol=1e-4
 
