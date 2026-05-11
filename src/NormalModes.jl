@@ -105,7 +105,7 @@ function to_atomic_masses(x::AbstractVector{<:Union{Integer, Symbol}})
     return [austrip(elements[E].atomic_mass) for E in x]
 end
 
-to_atomic_masses(system::AtomicSystem) = austrip.(atom_masses(system))
+to_atomic_masses(system::AtomicSystem) = austrip.(atom_mass.(system))
 
 to_atomic_masses(x) = to_atomic_units(x)
 
